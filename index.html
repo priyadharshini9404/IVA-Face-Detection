@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Facet — Face Analysis Workbench</title>
+<style>
+:root{--bg:#eef3f1;--ink:#12302f;--mut:#4d6664;--pri:#1f6f6b;--acc:#c2415d;--hi:#f1c453;--card:#fff;--line:#cfdcd9}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:70px}
+body{margin:0;display:flex;background:var(--bg);color:var(--ink);font:16px/1.65 "Segoe UI",system-ui,sans-serif}
+h1,h2,h3{font-family:"Trebuchet MS","Segoe UI",sans-serif;margin:0 0 .5em;line-height:1.2}
+h1{font-size:clamp(2.4rem,6vw,4rem);letter-spacing:-.02em}h2{font-size:1.7rem;border-left:6px solid var(--hi);padding-left:12px}h3{font-size:1.05rem}
+p{margin:0 0 .9em}canvas,svg{max-width:100%}
+.side{position:fixed;inset:0 auto 0 0;width:210px;background:#12302f;color:#d9ece9;padding:22px 14px;overflow:auto}
+.logo{display:block;font:700 1.6rem "Trebuchet MS",sans-serif;color:var(--hi);text-decoration:none;margin-bottom:18px}
+.side nav a{display:block;color:#d9ece9;text-decoration:none;padding:8px 10px;border-radius:8px;font-size:.95rem;white-space:nowrap}
+.side nav a:hover,.side nav a:focus-visible{background:#1f4a48}
+:focus-visible{outline:3px solid var(--hi);outline-offset:2px}
+main{margin-left:210px;flex:1;min-width:0;padding:0 28px 40px;max-width:1100px}
+section{padding:44px 0 6px}
+.lead{font-size:1.25rem;color:var(--pri);font-weight:600}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:16px 0}
+.grid .card{margin:0;border-top:5px solid var(--pri)}.grid .card:nth-child(2){border-top-color:var(--acc)}.grid .card:nth-child(3){border-top-color:var(--hi)}.grid .card:nth-child(4){border-top-color:#6b5aa8}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.row{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+button,.btn{font:inherit;border:2px solid var(--pri);background:#fff;color:var(--pri);border-radius:8px;padding:8px 14px;cursor:pointer;text-decoration:none;display:inline-block}
+button:hover,.btn:hover{background:#e3f0ee}button.pri,.btn.pri{background:var(--pri);color:#fff}button.pri:hover,.btn.pri:hover{background:#17524f}
+button:disabled{opacity:.5;cursor:not-allowed}
+label{display:block;font-size:.9rem;color:var(--mut);margin:8px 0 3px}
+select,input[type=file]{width:100%;font:inherit;padding:7px;border:1px solid #9fb6b2;border-radius:8px;background:#fff}
+input[type=range]{width:100%;accent-color:var(--pri)}
+.msg{padding:9px 12px;border-radius:8px;margin:8px 0;font-size:.93rem}.msg.err{background:#fbe9ed;color:#8e2a42;border:1px solid #efbac7}.msg.ok{background:#e4f3ef;color:#1d5c45;border:1px solid #b6dccf}.msg[hidden]{display:none}
+canvas{background:#e5ece9;border:1px solid var(--line);border-radius:8px;display:block}
+.m{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:10px}
+.m div{background:#f1f6f4;border-radius:8px;padding:8px 10px;font-size:.85rem;color:var(--mut);word-break:break-word}.m b{display:block;font-size:1.05rem;color:var(--ink)}
+.m .yes b{color:#1d7a55}.m .no b{color:var(--acc)}
+.pipe{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0}
+.pipe span{background:#12302f;color:#fff;padding:6px 12px;border-radius:6px;font-size:.85rem}
+.pipe span+span::before{content:"›";color:var(--hi);margin-right:10px;font-weight:700}
+.note{color:var(--mut);font-size:.88rem}
+.scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:.9rem}th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}th{background:#12302f;color:#fff}tbody th{background:#dbe9e6;color:var(--ink)}
+code{background:#e3ece9;padding:1px 6px;border-radius:4px}
+footer{padding:18px 0;color:var(--mut);font-size:.88rem}
+@media(max-width:860px){body{display:block}.side{position:sticky;top:0;inset:auto;width:auto;display:flex;align-items:center;gap:12px;padding:8px 12px;z-index:10}.logo{margin:0}.side nav{display:flex;overflow-x:auto;gap:2px}main{margin-left:0;padding:0 14px 30px}.two{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<aside class="side"><a class="logo" href="#home">Facet</a>
+<nav aria-label="Sections"><a href="#home">Home</a><a href="#tm">Template Matching</a><a href="#vj">Viola–Jones</a><a href="#df">DeepFace</a><a href="#fn">FaceNet</a><a href="#cmp">Compare</a><a href="#privacy">Privacy</a><a href="#about">About</a></nav></aside>
+<main>
+<section id="home" style="padding-top:36px">
+<h1>Facet</h1><p class="lead">See it. Match it. Recognise it.</p>
+<p>A hands-on workbench for four ways a computer can find and compare faces and objects: template matching, Viola–Jones, DeepFace and FaceNet. Upload your own images and watch each idea work.</p>
+<div class="row"><a class="btn pri" href="#tm">Try the live demo</a><a class="btn" href="#cards">Browse methods</a></div>
+<div class="pipe" id="homePipe" aria-label="Typical vision pipeline"></div>
+<div class="grid" id="cards">
+<div class="card"><h3>Template Matching</h3><p>Slide a small patch over a big image and score every position. Runs here for real.</p><a href="#tm">Open</a></div>
+<div class="card"><h3>Viola–Jones</h3><p>Haar features and a cascade find faces fast. Uses OpenCV's trained detector.</p><a href="#vj">Open</a></div>
+<div class="card"><h3>DeepFace</h3><p>Detect, align, embed, compare: a deep pipeline for face verification.</p><a href="#df">Open</a></div>
+<div class="card"><h3>FaceNet</h3><p>Turns faces into embeddings where distance reflects identity.</p><a href="#fn">Open</a></div>
+</div></section>
+
+<section id="tm"><h2>Template Matching</h2>
+<p>Load a large target image and a small template. The template is compared with every position of the target, and the best-scoring spot is boxed. The three methods use the same formulas as OpenCV's <code>matchTemplate</code>, computed in plain JavaScript, so this works offline.</p>
+<div class="card">
+<div class="two"><div><label for="tmT">Target image (to search in)</label><input type="file" id="tmT" accept="image/*"></div><div><label for="tmP">Template image (to find)</label><input type="file" id="tmP" accept="image/*"></div></div>
+<div class="two"><div><label for="tmM">Method</label><select id="tmM"><option value="ccoeff">TM_CCOEFF_NORMED</option><option value="ccorr">TM_CCORR_NORMED</option><option value="sqdiff">TM_SQDIFF_NORMED</option></select></div><div><label for="tmTh">Similarity threshold: <b id="tmThV">70%</b></label><input type="range" id="tmTh" min="10" max="100" value="70"></div></div>
+<div class="row"><button type="button" id="tmSample">Use sample images</button><button type="button" class="pri" id="tmRun">Run template matching</button><button type="button" id="tmReset">Reset</button></div>
+<p class="msg" id="tmMsg" role="status" hidden></p>
+<div class="two"><div><canvas id="tmCv" width="300" height="200" aria-label="Target image with match box"></canvas></div><div><canvas id="tmPv" width="120" height="80" aria-label="Template preview"></canvas><div class="m" id="tmOut"></div></div></div>
+<p class="note">Large images are scaled down to 480 px (the template by the same factor) to keep the browser fast. Confidence shows how far the best score stands above the average score over all positions. The threshold only decides MATCH or NO MATCH; it never changes the score.</p></div></section>
+
+<section id="vj"><h2>Viola–Jones</h2>
+<p>The classic real-time face detector. This demo loads OpenCV's pre-trained frontal-face Haar cascade, so it needs an internet connection the first time.</p>
+<div class="card"><p class="msg ok" id="vjStatus" role="status">Waiting to load OpenCV.js…</p>
+<div class="row"><input type="file" id="vjF" accept="image/*" aria-label="Choose an image with faces" style="max-width:320px"><button type="button" id="vjSample">Use sample image</button><button type="button" class="pri" id="vjRun" disabled>Detect faces</button><button type="button" id="vjReset">Reset</button></div>
+<canvas id="vjCv" width="300" height="200" aria-label="Image with detected faces"></canvas>
+<div class="m"><div>Faces detected<b id="vjN">–</b></div><div>Processing time<b id="vjT">–</b></div></div>
+<p class="note">The sample is a simple drawing, so the cascade may find nothing in it; real photos work much better. Whatever the cascade returns, including zero faces, is shown as-is.</p></div>
+<div class="pipe" id="vjPipe"></div>
+<div class="grid"><div class="card"><h3>Haar-like features</h3><p>Light and dark rectangles. The value is the white sum minus the black sum, for example a dark eye band over brighter cheeks.</p></div><div class="card"><h3>Integral image</h3><p>Each pixel stores the sum of everything above and to its left, so any rectangle sum takes four lookups.</p></div><div class="card"><h3>AdaBoost</h3><p>Picks the most useful features out of thousands and combines weak classifiers into a strong one.</p></div><div class="card"><h3>Cascade</h3><p>Cheap stages first. Most background windows are rejected early, which makes detection fast.</p></div></div></section>
+
+<section id="df"><h2>DeepFace</h2>
+<p>DeepFace (Facebook, 2014) verifies faces with a deep neural network trained on millions of images.</p>
+<div class="pipe" id="dfPipe"></div>
+<div class="card"><h3>DeepFace concept demonstration</h3><p class="note">No DeepFace network runs in this page. To show the comparison step, each image is shrunk to 16×16 grayscale, centred and normalised. The numbers are real maths on that simple descriptor, not DeepFace output, and they do not prove identity.</p><div id="dfMount"></div></div></section>
+
+<section id="fn"><h2>FaceNet</h2>
+<p>FaceNet (Google, 2015) maps a face to a compact embedding so that distance directly reflects similarity.</p>
+<div class="pipe" id="fnPipe"></div>
+<div class="card"><h3>FaceNet educational demonstration</h3><p class="note">No FaceNet model runs here. The metrics use the same 256-value pixel descriptor as the DeepFace demo, not real FaceNet embeddings.</p><div id="fnMount"></div></div>
+<div class="grid"><div class="card"><h3>Anchor</h3><p>A reference face.</p></div><div class="card"><h3>Positive</h3><p>Another image of the same person.</p></div><div class="card"><h3>Negative</h3><p>An image of a different person.</p></div><div class="card"><h3>Triplet loss</h3><p><code>L = max(‖f(a)−f(p)‖² − ‖f(a)−f(n)‖² + α, 0)</code>. Training pulls the positive close and pushes the negative at least a margin α away.</p></div></div></section>
+
+<section id="cmp"><h2>Compare</h2><div class="scroll"><table><thead><tr><th>Aspect</th><th>Template Matching</th><th>Viola–Jones</th><th>DeepFace</th><th>FaceNet</th></tr></thead><tbody>
+<tr><th>Goal</th><td>Locate a known patch</td><td>Detect faces</td><td>Verify faces</td><td>Verify, identify, cluster</td></tr>
+<tr><th>Input</th><td>Image + template</td><td>Image or video frame</td><td>Two aligned faces</td><td>Cropped faces</td></tr>
+<tr><th>Output</th><td>Best position and score</td><td>Face boxes</td><td>Same / different</td><td>Embedding and distance</td></tr>
+<tr><th>Technique</th><td>Sliding-window correlation</td><td>Haar features, cascade</td><td>Deep CNN, 3D alignment</td><td>Deep CNN, triplet loss</td></tr>
+<tr><th>Speed</th><td>Fast for small templates</td><td>Real time on CPU</td><td>Slower, GPU helps</td><td>Slower, GPU helps</td></tr>
+<tr><th>Learning</th><td>None</td><td>AdaBoost (classical)</td><td>Deep learning</td><td>Deep learning</td></tr>
+<tr><th>Typical use</th><td>Part inspection, UI testing</td><td>Autofocus, face counting</td><td>Identity research</td><td>Photo grouping, face search</td></tr></tbody></table></div></section>
+
+<section id="privacy"><h2>Privacy and responsible use</h2>
+<div class="card"><ul><li>Use only images you have permission to analyse.</li><li>Avoid sensitive or private photos.</li><li>Face-matching results are not proof of identity.</li><li>Do not use this for surveillance, tracking without consent, or high-impact decisions.</li></ul>
+<p>Images are processed locally in your browser and are never uploaded. The only network requests are OpenCV.js and the Haar cascade file for the Viola–Jones demo.</p><button type="button" id="clearAll">Clear all images</button></div></section>
+
+<section id="about"><h2>About</h2>
+<div class="card"><p>Facet is an educational Image and Video Analytics project covering template matching, Viola–Jones, DeepFace and FaceNet.</p>
+<p><b>Student:</b> Your Name<br><b>Department:</b> Your Department<br><b>College:</b> Your College</p>
+<p class="note">Sources: Viola and Jones (CVPR 2001); Taigman et al., DeepFace (CVPR 2014); Schroff et al., FaceNet (CVPR 2015); Gonzalez and Woods, Digital Image Processing.</p></div></section>
+<footer>Facet · everything runs in your browser</footer>
+</main>
+
+<script>
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id)};
+var clamp=function(v,a,b){return Math.min(b,Math.max(a,v))};
+var resets=[];
+
+function msg(el,t,type){if(!el)return;el.textContent=t||'';el.className='msg '+(type||'err');el.hidden=!t}
+function pipe(id,a){$(id).innerHTML=a.map(function(s){return '<span>'+s+'</span>'}).join('')}
+function dims(s){return{w:s.naturalWidth||s.width,h:s.naturalHeight||s.height}}
+function readImage(file){return new Promise(function(res,rej){
+ if(!file)return rej(new Error('No file selected.'));
+ if(!/^image\/(jpeg|png|webp)$/.test(file.type))return rej(new Error('Unsupported file. Please choose a JPG, PNG or WEBP image.'));
+ var u=URL.createObjectURL(file),i=new Image();
+ i.onload=function(){URL.revokeObjectURL(u);res(i)};
+ i.onerror=function(){URL.revokeObjectURL(u);rej(new Error('That file could not be read as an image.'))};
+ i.src=u})}
+function grayOf(cv){var w=cv.width,h=cv.height,d=cv.getContext('2d').getImageData(0,0,w,h).data,g=new Float32Array(w*h);for(var i=0;i<w*h;i++)g[i]=.299*d[i*4]+.587*d[i*4+1]+.114*d[i*4+2];return g}
+function blank(cv,t){cv.width=300;cv.height=200;var c=cv.getContext('2d');c.fillStyle='#e5ece9';c.fillRect(0,0,300,200);c.fillStyle='#4d6664';c.font='14px sans-serif';c.textAlign='center';c.fillText(t||'No image loaded',150,100)}
+function box(c,r,color,dash,label){c.lineWidth=3;c.strokeStyle=color;c.setLineDash(dash?[7,5]:[]);c.strokeRect(r.x,r.y,r.w,r.h);c.setLineDash([]);if(label){c.fillStyle=color;c.font='bold 12px sans-serif';c.textAlign='left';c.fillText(label,r.x+2,Math.max(12,r.y-4))}}
+
+/* ---------------- Template matching ---------------- */
+function matchTemplate(g,w,h,t,pw,ph,method){
+ var sx=Math.max(1,Math.ceil(pw/24)),sy=Math.max(1,Math.ceil(ph/24)),offs=[],tv=[],x,y,i;
+ for(y=0;y<ph;y+=sy)for(x=0;x<pw;x+=sx){offs.push(y*w+x);tv.push(t[y*pw+x])}
+ var n=offs.length,st=0,stt=0;
+ for(i=0;i<n;i++){st+=tv[i];stt+=tv[i]*tv[i]}
+ var tm=st/n,tvar=stt-n*tm*tm;
+ if(method==='ccoeff'&&tvar<n*4)throw new Error('The template is too flat (almost no texture) for this method. Try another template or TM_CCORR_NORMED.');
+ if(stt<=0)throw new Error('The template is completely black, so it cannot be matched.');
+ var best={s:-1,x:0,y:0},sum=0,cnt=0;
+ for(var y0=0;y0<=h-ph;y0++)for(var x0=0;x0<=w-pw;x0++){
+  var b=y0*w+x0,sp=0,spp=0,spt=0;
+  for(i=0;i<n;i++){var p=g[b+offs[i]];sp+=p;spp+=p*p;spt+=p*tv[i]}
+  var s;
+  if(method==='ccoeff'){var pm=sp/n,pv=spp-n*pm*pm;s=pv<1e-6?0:Math.max(0,(spt-n*pm*tm)/Math.sqrt(pv*tvar))}
+  else if(method==='ccorr'){s=spp<=0?0:spt/Math.sqrt(spp*stt)}
+  else{s=Math.max(0,1-(spp-2*spt+stt)/Math.sqrt(spp*stt+1e-9))}
+  sum+=s;cnt++;if(s>best.s)best={s:s,x:x0,y:y0};
+ }
+ best.mean=sum/cnt;return best;
+}
+function sampleScene(){
+ var c=document.createElement('canvas');c.width=360;c.height=240;var x=c.getContext('2d');
+ x.fillStyle='#d9e6df';x.fillRect(0,0,360,240);
+ var cols=['#6aa84f','#e69138','#8e7cc3','#3d85c6','#cc4125'];
+ for(var i=0;i<14;i++){x.fillStyle=cols[i%5];x.beginPath();x.arc(30+(i*53)%330,30+(i*71)%190,10+(i*7)%16,0,7);x.fill()}
+ x.fillStyle='#fff';x.fillRect(60,160,70,40);x.fillStyle='#12302f';x.fillRect(70,170,20,20);
+ x.fillStyle='#c2415d';x.beginPath();x.arc(232,118,24,0,7);x.fill();
+ x.fillStyle='#f1c453';x.beginPath();x.arc(232,118,10,0,7);x.fill();
+ x.fillStyle='#12302f';for(var k=0;k<6;k++){x.beginPath();x.arc(232+30*Math.cos(k*1.047),118+30*Math.sin(k*1.047),5,0,7);x.fill()}
+ var p=document.createElement('canvas');p.width=p.height=72;p.getContext('2d').drawImage(c,232-36,118-36,72,72,0,0,72,72);
+ return{t:c,p:p};
+}
+function initTM(){
+ var cv=$('tmCv'),pv=$('tmPv'),m=$('tmMsg'),out=$('tmOut'),tImg=null,pImg=null,tG=null,pG=null,tBase=null,res=null;
+ function metrics(o){out.innerHTML=Object.keys(o).map(function(k){var v=o[k],cls='';if(k==='Decision')cls=v==='MATCH'?' class="yes"':' class="no"';return '<div'+cls+'>'+k+'<b>'+v+'</b></div>'}).join('')}
+ function draw(){
+  if(!tBase){blank(cv);return}
+  cv.getContext('2d').putImageData(tBase,0,0);
+  if(res)box(cv.getContext('2d'),res.r,res.ok?'#1d9a63':'#c2415d',!res.ok,res.ok?'match':'best candidate');
+ }
+ function render(){
+  res=null;tBase=tG=pG=null;
+  if(!tImg){blank(cv);}
+  else{
+   var d=dims(tImg),s=Math.min(1,480/Math.max(d.w,d.h));
+   cv.width=Math.max(1,Math.round(d.w*s));cv.height=Math.max(1,Math.round(d.h*s));
+   cv.getContext('2d').drawImage(tImg,0,0,cv.width,cv.height);
+   tBase=cv.getContext('2d').getImageData(0,0,cv.width,cv.height);tG=grayOf(cv);
+   if(pImg){var e=dims(pImg);pv.width=Math.max(1,Math.round(e.w*s));pv.height=Math.max(1,Math.round(e.h*s));pv.getContext('2d').drawImage(pImg,0,0,pv.width,pv.height);pG=grayOf(pv)}
+   if(s<1)msg(m,'Large image scaled to '+cv.width+'×'+cv.height+' px for browser performance.','ok');
+  }
+  if(!pImg){pv.width=120;pv.height=80;blank(pv,'No template');pv.width=120}
+  draw();
+ }
+ function load(file,isT){readImage(file).then(function(img){msg(m,'');if(isT)tImg=img;else pImg=img;render()}).catch(function(e){msg(m,e.message)})}
+ $('tmT').addEventListener('change',function(){if(this.files[0])load(this.files[0],true)});
+ $('tmP').addEventListener('change',function(){if(this.files[0])load(this.files[0],false)});
+ $('tmTh').addEventListener('input',function(){$('tmThV').textContent=this.value+'%'});
+ $('tmSample').addEventListener('click',function(){try{var s=sampleScene();tImg=s.t;pImg=s.p;msg(m,'Sample images loaded. Press "Run template matching".','ok');render()}catch(e){msg(m,'Could not create the sample images.')}});
+ $('tmRun').addEventListener('click',function(){
+  msg(m,'');
+  if(!tG||!pG){msg(m,'Please load a target image and a template image first, or press "Use sample images".');return}
+  var w=cv.width,h=cv.height,pw=pv.width,ph=pv.height;
+  if(pw>w||ph>h){msg(m,'The template must be smaller than the target image.');return}
+  try{
+   var t0=performance.now(),method=$('tmM').value,r=matchTemplate(tG,w,h,pG,pw,ph,method),th=+$('tmTh').value/100;
+   var ms=Math.round(performance.now()-t0),conf=clamp((r.s-r.mean)/(1-r.mean+1e-9),0,1),ok=r.s>=th;
+   res={r:{x:r.x,y:r.y,w:pw,h:ph},ok:ok};draw();
+   metrics({'Matching score':(r.s*100).toFixed(1)+'%','Threshold':(th*100)+'%','Decision':ok?'MATCH':'NO MATCH','Confidence':(conf*100).toFixed(1)+'%','Coordinates':'('+r.x+', '+r.y+')','Template region':pw+'×'+ph+' px','Processing time':ms+' ms','Method':$('tmM').options[$('tmM').selectedIndex].text});
+  }catch(e){res=null;draw();msg(m,e.message||'Matching failed.')}
+ });
+ function reset(){tImg=pImg=null;$('tmT').value='';$('tmP').value='';msg(m,'');out.innerHTML='';render()}
+ $('tmReset').addEventListener('click',reset);resets.push(reset);render();
+}
+
+/* ---------------- Viola-Jones with OpenCV.js ---------------- */
+function initVJ(){
+ var cv=$('vjCv'),st=$('vjStatus'),run=$('vjRun'),base=null,classifier=null,CASCADE='https://raw.githubusercontent.com/opencv/opencv/4.x/data/haarcascades/haarcascade_frontalface_default.xml';
+ function put(src){
+  var d=dims(src),s=Math.min(1,480/Math.max(d.w,d.h));cv.width=Math.max(1,Math.round(d.w*s));cv.height=Math.max(1,Math.round(d.h*s));
+  cv.getContext('2d').drawImage(src,0,0,cv.width,cv.height);base=cv.getContext('2d').getImageData(0,0,cv.width,cv.height);
+  $('vjN').textContent='–';$('vjT').textContent='–';
+ }
+ function sampleFace(){
+  var c=document.createElement('canvas');c.width=c.height=320;var x=c.getContext('2d');
+  x.fillStyle='#e9eeea';x.fillRect(0,0,320,320);x.fillStyle='#e8bf9b';x.beginPath();x.ellipse(160,165,80,100,0,0,7);x.fill();
+  x.fillStyle='#3b2a20';x.beginPath();x.ellipse(160,100,84,46,0,Math.PI,0);x.fill();
+  x.fillStyle='#fff';[125,195].forEach(function(e){x.beginPath();x.ellipse(e,145,17,10,0,0,7);x.fill()});
+  x.fillStyle='#222';[125,195].forEach(function(e){x.beginPath();x.arc(e,145,6,0,7);x.fill()});
+  x.strokeStyle='#9a6b50';x.lineWidth=3;x.beginPath();x.moveTo(160,155);x.lineTo(152,190);x.lineTo(168,190);x.stroke();
+  x.strokeStyle='#a0383f';x.lineWidth=4;x.beginPath();x.arc(160,215,25,.2,Math.PI-.2);x.stroke();return c;
+ }
+ function loadOpenCV(){
+  msg(st,'Loading OpenCV.js…','ok');
+  var s=document.createElement('script');s.async=true;s.src='https://docs.opencv.org/4.x/opencv.js';
+  s.onerror=function(){msg(st,'OpenCV.js could not be loaded. Check your internet connection and reload. The other demos still work.')};
+  document.head.appendChild(s);
+  var tries=0,tm=setInterval(function(){
+   tries++;
+   if(window.cv&&window.cv.Mat&&window.cv.CascadeClassifier){clearInterval(tm);loadCascade()}
+   else if(tries>120){clearInterval(tm);msg(st,'OpenCV.js took too long to start. Reload the page to try again.')}
+  },500);
+ }
+ function loadCascade(){
+  msg(st,'OpenCV ready. Loading the face cascade…','ok');
+  fetch(CASCADE).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.arrayBuffer()}).then(function(buf){
+   cv_FS(new Uint8Array(buf));classifier=new window.cv.CascadeClassifier();
+   if(!classifier.load('face.xml'))throw new Error('cascade did not load');
+   run.disabled=false;msg(st,'Ready. Choose an image and press "Detect faces".','ok');
+  }).catch(function(e){msg(st,'The Haar cascade file could not be loaded ('+e.message+'). Check your connection and reload.')});
+ }
+ function cv_FS(bytes){try{window.cv.FS_unlink('/face.xml')}catch(e){}window.cv.FS_createDataFile('/','face.xml',bytes,true,false,false)}
+ $('vjF').addEventListener('change',function(){
+  if(!this.files[0])return;
+  readImage(this.files[0]).then(function(img){msg($('vjStatus'),classifier?'Image loaded. Press "Detect faces".':st.textContent,classifier?'ok':'ok');put(img)}).catch(function(e){msg(st,e.message)});
+ });
+ $('vjSample').addEventListener('click',function(){put(sampleFace())});
+ run.addEventListener('click',function(){
+  if(!classifier||!window.cv){msg(st,'The detector is not ready yet.');return}
+  if(!base){msg(st,'Please choose an image or use the sample image first.');return}
+  var src=null,gray=null,faces=null;
+  try{
+   var ctx=cv.getContext('2d');ctx.putImageData(base,0,0);
+   var t0=performance.now();src=window.cv.imread(cv);gray=new window.cv.Mat();
+   window.cv.cvtColor(src,gray,window.cv.COLOR_RGBA2GRAY,0);faces=new window.cv.RectVector();
+   classifier.detectMultiScale(gray,faces,1.1,4,0);
+   var n=faces.size();
+   for(var i=0;i<n;i++){var r=faces.get(i);box(ctx,{x:r.x,y:r.y,w:r.width,h:r.height},'#c2415d',false,'face '+(i+1))}
+   $('vjN').textContent=n;$('vjT').textContent=Math.round(performance.now()-t0)+' ms';
+   msg(st,n?n+' face(s) found.':'No faces found in this image.','ok');
+  }catch(e){msg(st,'Detection failed: '+(e&&e.message?e.message:'unknown error'))}
+  finally{[src,gray,faces].forEach(function(o){try{if(o)o.delete()}catch(e){}})}
+ });
+ function reset(){base=null;$('vjF').value='';$('vjN').textContent='–';$('vjT').textContent='–';blank(cv);if(classifier)msg(st,'Ready. Choose an image and press "Detect faces".','ok')}
+ $('vjReset').addEventListener('click',reset);resets.push(reset);blank(cv);loadOpenCV();
+}
+
+/* ---------------- DeepFace / FaceNet stand-in comparison ---------------- */
+function descriptor(img){
+ var c=document.createElement('canvas');c.width=c.height=16;var x=c.getContext('2d');x.drawImage(img,0,0,16,16);
+ var d=x.getImageData(0,0,16,16).data,g=[],m=0,i;
+ for(i=0;i<256;i++){var v=.299*d[i*4]+.587*d[i*4+1]+.114*d[i*4+2];g.push(v);m+=v}
+ m/=256;var n=0;for(i=0;i<256;i++){g[i]-=m;n+=g[i]*g[i]}
+ n=Math.sqrt(n);if(n<1e-6)throw new Error('This image has no variation (it is a single flat color), so it cannot be described.');
+ return g.map(function(v){return v/n});
+}
+function mountCmp(id){
+ var r=$(id+'Mount'),p=id;
+ r.innerHTML='<div class="two"><div><label for="'+p+'A">Face image A</label><input type="file" id="'+p+'A" accept="image/*"><canvas id="'+p+'Ca" width="96" height="96" aria-label="Preview of face A"></canvas></div><div><label for="'+p+'B">Face image B</label><input type="file" id="'+p+'B" accept="image/*"><canvas id="'+p+'Cb" width="96" height="96" aria-label="Preview of face B"></canvas></div></div><label for="'+p+'Th">Cosine threshold: <b id="'+p+'ThV">80%</b></label><input type="range" id="'+p+'Th" min="0" max="100" value="80"><div class="row"><button type="button" class="pri" id="'+p+'Go">Compare</button><button type="button" id="'+p+'Rs">Reset</button></div><p class="msg" id="'+p+'Msg" role="status" hidden></p><div class="m" id="'+p+'Out"></div>';
+ var m=$(p+'Msg'),D={a:null,b:null};
+ function prev(cv,img){var c=cv.getContext('2d');c.clearRect(0,0,96,96);if(img)c.drawImage(img,0,0,96,96)}
+ function load(k,inp,cv){inp.addEventListener('change',function(){
+  if(!inp.files[0])return;
+  readImage(inp.files[0]).then(function(img){D[k]=descriptor(img);prev(cv,img);msg(m,'')}).catch(function(e){D[k]=null;prev(cv,null);msg(m,e.message)});
+ })}
+ load('a',$(p+'A'),$(p+'Ca'));load('b',$(p+'B'),$(p+'Cb'));prev($(p+'Ca'),null);prev($(p+'Cb'),null);
+ $(p+'Th').addEventListener('input',function(){$(p+'ThV').textContent=this.value+'%'});
+ $(p+'Go').addEventListener('click',function(){
+  if(!D.a||!D.b){msg(m,'Please choose both images first.');return}
+  try{
+   var cos=0,dist=0;for(var i=0;i<256;i++){cos+=D.a[i]*D.b[i];var d=D.a[i]-D.b[i];dist+=d*d}
+   dist=Math.sqrt(dist);var th=+$(p+'Th').value/100,ok=cos>=th;msg(m,'');
+   $(p+'Out').innerHTML='<div>Cosine similarity<b>'+(cos*100).toFixed(1)+'%</b></div><div>Euclidean distance<b>'+dist.toFixed(3)+'</b></div><div>Threshold<b>'+(th*100)+'%</b></div><div class="'+(ok?'yes':'no')+'">Pixel patterns<b>'+(ok?'Similar':'Different')+'</b></div>';
+  }catch(e){msg(m,'Comparison failed: '+e.message)}
+ });
+ function reset(){D.a=D.b=null;$(p+'A').value='';$(p+'B').value='';prev($(p+'Ca'),null);prev($(p+'Cb'),null);msg(m,'');$(p+'Out').innerHTML=''}
+ $(p+'Rs').addEventListener('click',reset);resets.push(reset);
+}
+
+/* ---------------- init ---------------- */
+function init(){
+ var steps=[
+  function(){pipe('homePipe',['Input image','Preprocessing','Detection','Feature extraction','Matching','Result'])},
+  function(){pipe('vjPipe',['Image','Haar features','AdaBoost','Cascade classifier','Face detection'])},
+  function(){pipe('dfPipe',['Face detection','Face alignment','Deep neural network','Feature extraction','Face verification'])},
+  function(){pipe('fnPipe',['Face image','CNN','Face embedding','Distance','Verification'])},
+  initTM,initVJ,function(){mountCmp('df')},function(){mountCmp('fn')},
+  function(){$('clearAll').addEventListener('click',function(){resets.forEach(function(f){try{f()}catch(e){}})})}];
+ steps.forEach(function(f){try{f()}catch(e){if(window.console)console.error(e)}});
+}
+init();
+})();
+</script>
+</body>
+</html>
